@@ -1,4 +1,3 @@
-
 function run(opts)
 
 %   RUN -- Run the task based on the saved config file options.
@@ -8,21 +7,47 @@ function run(opts)
 
 INTERFACE = opts.INTERFACE;
 STIMULI = opts.STIMULI;
+IMAGES = opts.IMAGES;
 TRACKER = opts.TRACKER;
 TIMER = opts.TIMER;
+REWARDS = opts.REWARDS;
+STRUCTURE = opts.STRUCTURE;
+
+comm = opts.SERIAL.comm;
 
 fix_targ = STIMULI.fix_square;
 cs_stim = STIMULI.cs;
+cs_reward_stim = STIMULI.reward_size;
 
-cstate = 'fixation';
+cstate = 'new_trial';
 first_entry = true;
 is_debug = INTERFACE.debug;
+
+current_n_rewards = [];
 
 while ( true )
   
   TRACKER.update_coordinates();
   fix_targ.update_targets();
   cs_stim.update_targets();
+  
+  %   NEW_TRIAL
+  if ( strcmp(cstate, 'new_trial') )
+    current_n_rewards = randperm( 3, 1 );
+    image_index = current_n_rewards;
+    if ( current_n_rewards > numel(IMAGES.reward_size) )
+      msg = sprintf( 'Requested image %d, but there are only %d images' ...
+        , current_n_rewards, numel(IMAGES.reward_size) );
+      log_debug( msg, is_debug );
+      image_index = numel( IMAGES.reward_size );
+    end
+    if ( image_index > 0 )
+      cs_reward_stim.image = IMAGES.reward_size(image_index).image;
+    end
+    log_debug( sprintf('Current rewards: %d', current_n_rewards), is_debug );
+    cstate = 'fixation';
+    first_entry = true;
+  end
   
   %   FIXATION
   if ( strcmp(cstate, 'fixation') )
@@ -78,6 +103,7 @@ while ( true )
     end
     
     if ( ~drew_cs )
+      cs_reward_stim.draw();
       cs_stim.draw();
       sflip( opts );
       drew_cs = true;
@@ -101,14 +127,89 @@ while ( true )
     
     if ( cs_stim.duration_met() )
       log_exit( cstate, is_debug );
-      cstate = 'cs_reward';
+      cstate = 'cs_delay';
       first_entry = true;
       continue;
     end
     
     if ( TIMER.duration_met(cstate) )
       log_exit( cstate, is_debug );
+      cstate = 'cs_error';
+      first_entry = true;
+    end
+  end
+  
+  %   CS_DELAY
+  if ( strcmp(cstate, 'cs_delay') )
+    if ( first_entry )
+      log_entry( cstate, is_debug );
+      TIMER.reset_timers( cstate );
+      first_entry = false;
+    end
+    
+    if ( STRUCTURE.require_fixation_during_delay )
+      if ( ~cs_stim.in_bounds() )
+        log_exit( cstate, is_debug );
+        cstate = 'cs_error';
+        first_entry = true;
+        continue;
+      end
+    end
+    
+    if ( TIMER.duration_met(cstate) )
+      log_exit( cstate, is_debug );
       cstate = 'cs_reward';
+      first_entry = true;
+    end
+  end
+  
+  %   CS_REWARD
+  if ( strcmp(cstate, 'cs_reward') )
+    if ( first_entry )
+      log_entry( cstate, is_debug );
+      TIMER.reset_timers( cstate );
+      TIMER.set_durations( 'cs_reward_pulse', REWARDS.single_pulse );
+      delivered_pulses = 0;
+      first_entry = false;
+    end
+    
+    if ( delivered_pulses == 0 || TIMER.duration_met('cs_reward_pulse') )
+      if ( delivered_pulses == current_n_rewards )
+        log_exit( cstate, is_debug );
+        cstate = 'iti';
+        first_entry = true;
+        continue;
+      end
+      log_debug( 'CS_Reward!', is_debug );
+      image_index = current_n_rewards - delivered_pulses - 1;
+      delivered_pulses = delivered_pulses + 1;
+      if ( numel(IMAGES.reward_size) < delivered_pulses )
+        log_debug( 'Not enough images.', is_debug );
+        image_index = min( delivered_pulses, numel(IMAGES.reward_size) );
+      end
+      comm.reward( 1, REWARDS.single_pulse * 1e3 ); % ms
+      TIMER.reset_timers( 'cs_reward_pulse' );
+      if ( image_index > 0 )
+        cs_reward_stim.image = IMAGES.reward_size(image_index).image;
+        cs_reward_stim.draw();
+      end
+      cs_stim.draw();
+      sflip( opts );
+    end
+  end
+  
+  %   ITI
+  if ( strcmp(cstate, 'iti') )
+    if ( first_entry )
+      sflip( opts );
+      log_entry( cstate, is_debug );
+      TIMER.reset_timers( cstate );
+      first_entry = false;
+    end
+    
+    if ( TIMER.duration_met(cstate) )
+      log_exit( cstate, is_debug );
+      cstate = 'new_trial';
       first_entry = true;
     end
   end
@@ -124,7 +225,7 @@ while ( true )
     
     if ( TIMER.duration_met(cstate) )
       log_exit( cstate, is_debug );
-      cstate = 'fixation';
+      cstate = 'new_trial';
       first_entry = true;
     end
   end
@@ -140,23 +241,7 @@ while ( true )
     
     if ( TIMER.duration_met(cstate) )
       log_exit( cstate, is_debug );
-      cstate = 'fixation';
-      first_entry = true;
-    end
-  end
-  
-  %   CS_REWARD
-  if ( strcmp(cstate, 'cs_reward') )
-    if ( first_entry )
-      sflip( opts );
-      log_entry( cstate, is_debug );
-      TIMER.reset_timers( cstate );
-      first_entry = false;
-    end
-    
-    if ( TIMER.duration_met(cstate) )
-      log_exit( cstate, is_debug );
-      cstate = 'fixation';
+      cstate = 'new_trial';
       first_entry = true;
     end
   end
@@ -168,6 +253,8 @@ while ( true )
   end
 
 end
+
+TRACKER.shutdown();
 
 end
 
