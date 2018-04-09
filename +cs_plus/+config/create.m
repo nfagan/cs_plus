@@ -33,6 +33,7 @@ DEPENDS.repositories = { 'ptb_helpers', 'serial_comm' };
 %   INTERFACE
 INTERFACE = struct();
 INTERFACE.stop_key = KbName( 'escape' );
+INTERFACE.reward_key = KbName( 'r' );
 INTERFACE.use_mouse = true;
 INTERFACE.use_reward = true;
 INTERFACE.is_master_arduino = false;

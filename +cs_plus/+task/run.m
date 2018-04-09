@@ -24,6 +24,7 @@ first_entry = true;
 is_debug = INTERFACE.debug;
 
 current_n_rewards = [];
+reward_key_timer = NaN;
 
 while ( true )
   
@@ -250,6 +251,13 @@ while ( true )
 
   if ( key_pressed )
     if ( key_code(INTERFACE.stop_key) ), break; end
+    
+    if ( key_code(INTERFACE.reward_key) )
+      if ( isnan(reward_key_timer) || toc(reward_key_timer) > REWARDS.key_press )
+        comm.reward( 1, REWARDS.key_press * 1e3 ); % ms
+        reward_key_timer = tic();
+      end
+    end
   end
 
 end

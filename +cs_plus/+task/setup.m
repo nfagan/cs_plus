@@ -107,8 +107,8 @@ if ( numel(IMAGES.reward_size) > 0 )
   STIMULI.reward_size.image = IMAGES.reward_size(1).image;
   dims = size( IMAGES.reward_size(1).image );
   dims = dims * STIMULI.setup.reward_size.scale(1);
-%   displace = STIMULI.setup.reward_size.displacement;
-  displace = -STIMULI.setup.cs.size;
+  displace = STIMULI.setup.reward_size.displacement;
+%   displace = -STIMULI.setup.cs.size;
   if ( numel(displace) == 2 ), displace = displace(2); end
   STIMULI.reward_size.len = dims(1);
   STIMULI.reward_size.width = dims(2);

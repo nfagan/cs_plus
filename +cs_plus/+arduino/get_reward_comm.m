@@ -8,6 +8,9 @@ function comm = get_reward_comm(conf)
 
 import brains.arduino.BrainsSerialManagerPaired;
 
+comm = brains.arduino.get_serial_comm();
+return;
+
 if ( nargin < 1 )
   conf = cs_plus.config.load(); 
 else

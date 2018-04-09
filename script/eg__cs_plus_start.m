@@ -3,11 +3,12 @@ conf = cs_plus.config.load();
 data_dir = brains.util.get_latest_data_dir_path();
 cs_plus_dir = fullfile( data_dir, 'cs_plus' );
 
-shared_utils.io.require_dir( delay_dir );
+shared_utils.io.require_dir( cs_plus_dir );
 
-conf.PATHS.edf_folder = delay_dir;
+conf.PATHS.edf_folder = cs_plus_dir;
 
 conf.SCREEN.rect = [ 1680+1024, 0, 1680+1024*2, 768 ];
+% conf.SCREEN.rect = [ 0, 0, 1024, 768 ];
 % conf.SCREEN.rect = [ 0, 0, 400, 400 ];
 conf.SCREEN.index = 0;
 
@@ -19,9 +20,13 @@ conf.STIMULI.setup.cs.target_padding = 100;
 conf.STIMULI.setup.cs.size = 200;
 
 %   FIXATION SQUARE
-conf.STIMULI.setup.fix_square.target_duration = 0.3;
+conf.STIMULI.setup.fix_square.target_duration = 0.15;
 conf.STIMULI.setup.fix_square.target_padding = 100;
-conf.STIMULI.setup.fix_square.size = 70;
+conf.STIMULI.setup.fix_square.size = 120;
+
+%   REWARD SIZE
+conf.STIMULI.setup.reward_size.displacement = -140;
+conf.STIMULI.setup.reward_size.scale = 2;
 
 conf.TIMINGS.time_in.fixation = Inf;
 conf.TIMINGS.time_in.cs_presentation = Inf;
@@ -41,5 +46,6 @@ conf.INTERFACE.use_mouse = false;
 conf.INTERFACE.use_reward = true;
 
 conf.REWARDS.single_pulse = 0.1;  % s
+conf.REWARDS.key_press = 0.1;
 
 cs_plus.task.start( conf );
