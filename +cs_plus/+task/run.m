@@ -25,8 +25,29 @@ is_debug = INTERFACE.debug;
 
 current_n_rewards = [];
 reward_key_timer = NaN;
+reward_timeout = 0.5;
+
+PLEX_SYNC = struct();
+PLEX_SYNC.timer = NaN;
+PLEX_SYNC.sync_times = nan( 1e4, 1 );
+PLEX_SYNC.sync_stp = 1;
+PLEX_SYNC.frequency = opts.STRUCTURE.plex_sync_frequency;
+PLEX_SYNC.start_time = TIMER.get_time( 'task' );
+
+DATA = struct();
+TRIAL_NUMBER = 0;
+PROGRESS = struct();
+
+comm.sync_pulse( 1 );
 
 while ( true )
+  
+  if ( isnan(PLEX_SYNC.timer) || toc(PLEX_SYNC.timer) >= PLEX_SYNC.frequency )
+    comm.sync_pulse( 2 );
+    PLEX_SYNC.sync_times(PLEX_SYNC.sync_stp) = TIMER.get_time( 'task' );
+    PLEX_SYNC.sync_stp = PLEX_SYNC.sync_stp + 1;
+    PLEX_SYNC.timer = tic();
+  end
   
   TRACKER.update_coordinates();
   fix_targ.update_targets();
@@ -45,6 +66,12 @@ while ( true )
     if ( image_index > 0 )
       cs_reward_stim.image = IMAGES.reward_size(image_index).image;
     end
+    if ( TRIAL_NUMBER > 0 )
+      tn = TRIAL_NUMBER;
+      DATA(tn).events = PROGRESS;
+    end
+    TRIAL_NUMBER = TRIAL_NUMBER + 1;
+    PROGRESS = structfun( @(x) nan, PROGRESS, 'un', false );
     log_debug( sprintf('Current rewards: %d', current_n_rewards), is_debug );
     cstate = 'fixation';
     first_entry = true;
@@ -54,6 +81,7 @@ while ( true )
   if ( strcmp(cstate, 'fixation') )
     if ( first_entry )
       log_entry( cstate, is_debug );
+      PROGRESS.(cstate) = TIMER.get_time( 'task' );
       TIMER.reset_timers( cstate );
       TIMER.reset_timers( 'aq_fixation' );
       fix_targ.reset_targets();
@@ -95,6 +123,7 @@ while ( true )
   if ( strcmp(cstate, 'cs_presentation') )
     if ( first_entry )
       log_entry( cstate, is_debug );
+      PROGRESS.(cstate) = TIMER.get_time( 'task' );
       sflip( opts );
       drew_cs = false;
       TIMER.reset_timers( cstate );
@@ -119,6 +148,7 @@ while ( true )
     
     if ( cs_stim.in_bounds() )
       looked_to_target = true;
+      PROGRESS.cs_target_acquire = TIMER.get_time( 'task' );
     elseif ( looked_to_target )
       log_exit( cstate, is_debug );
       cstate = 'cs_error';
@@ -144,6 +174,7 @@ while ( true )
   if ( strcmp(cstate, 'cs_delay') )
     if ( first_entry )
       log_entry( cstate, is_debug );
+      PROGRESS.(cstate) = TIMER.get_time( 'task' );
       TIMER.reset_timers( cstate );
       first_entry = false;
     end
@@ -168,6 +199,7 @@ while ( true )
   if ( strcmp(cstate, 'cs_reward') )
     if ( first_entry )
       log_entry( cstate, is_debug );
+      PROGRESS.(cstate) = TIMER.get_time( 'task' );
       TIMER.reset_timers( cstate );
       TIMER.set_durations( 'cs_reward_pulse', REWARDS.single_pulse );
       delivered_pulses = 0;
@@ -204,6 +236,7 @@ while ( true )
     if ( first_entry )
       sflip( opts );
       log_entry( cstate, is_debug );
+      PROGRESS.(cstate) = TIMER.get_time( 'task' );
       TIMER.reset_timers( cstate );
       first_entry = false;
     end
@@ -220,6 +253,7 @@ while ( true )
     if ( first_entry )
       sflip( opts );
       log_entry( cstate, is_debug );
+      PROGRESS.(cstate) = TIMER.get_time( 'task' );
       TIMER.reset_timers( cstate );
       first_entry = false;
     end
@@ -236,6 +270,7 @@ while ( true )
     if ( first_entry )
       sflip( opts );
       log_entry( cstate, is_debug );
+      PROGRESS.(cstate) = TIMER.get_time( 'task' );
       TIMER.reset_timers( cstate );
       first_entry = false;
     end
@@ -253,7 +288,7 @@ while ( true )
     if ( key_code(INTERFACE.stop_key) ), break; end
     
     if ( key_code(INTERFACE.reward_key) )
-      if ( isnan(reward_key_timer) || toc(reward_key_timer) > REWARDS.key_press )
+      if ( isnan(reward_key_timer) || toc(reward_key_timer) > reward_timeout )
         comm.reward( 1, REWARDS.key_press * 1e3 ); % ms
         reward_key_timer = tic();
       end
@@ -263,6 +298,33 @@ while ( true )
 end
 
 TRACKER.shutdown();
+
+if ( opts.INTERFACE.save_data )
+  data_dir = opts.PATHS.data_folder;
+  data_file = get_filename( data_dir );
+  data = struct();
+  data.sync = PLEX_SYNC;
+  data.opts = opts;
+  data.DATA = DATA;
+  save( fullfile(data_dir, data_file), 'data' );
+end
+
+end
+
+function out = get_filename(dir)
+
+mats = shared_utils.io.dirnames( dir, '.mat', false );
+
+if ( numel(mats) == 0 )
+  new_n = 1;
+else
+  is_cs_plus = cellfun( @(x) ~isempty(strfind(x, 'cs_plus__')), mats );
+  n = numel( 'cs_plus__' );
+  ns = cellfun( @(x) str2double(x(n+1:end-4)), mats(is_cs_plus) );
+  new_n = max( ns ) + 1;
+end
+
+out = sprintf( 'cs_plus__%d', new_n );
 
 end
 

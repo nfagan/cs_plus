@@ -6,9 +6,10 @@ cs_plus_dir = fullfile( data_dir, 'cs_plus' );
 shared_utils.io.require_dir( cs_plus_dir );
 
 conf.PATHS.edf_folder = cs_plus_dir;
+conf.PATHS.data_folder = cs_plus_dir;
 
-conf.SCREEN.rect = [ 1680+1024, 0, 1680+1024*2, 768 ];
-% conf.SCREEN.rect = [ 0, 0, 1024, 768 ];
+% conf.SCREEN.rect = [ 1680+1024, 0, 1680+1024*2, 768 ];
+conf.SCREEN.rect = [ 0, 0, 1024, 768 ];
 % conf.SCREEN.rect = [ 0, 0, 400, 400 ];
 conf.SCREEN.index = 0;
 
@@ -28,6 +29,7 @@ conf.STIMULI.setup.fix_square.size = 120;
 conf.STIMULI.setup.reward_size.displacement = -140;
 conf.STIMULI.setup.reward_size.scale = 2;
 
+conf.TIMINGS.time_in.task = 0;
 conf.TIMINGS.time_in.fixation = Inf;
 conf.TIMINGS.time_in.cs_presentation = Inf;
 conf.TIMINGS.time_in.cs_delay = 0.5;
@@ -44,6 +46,7 @@ conf.TIMINGS.acquisition.aq_fixation = 6;
 conf.INTERFACE.debug = false;
 conf.INTERFACE.use_mouse = false;
 conf.INTERFACE.use_reward = true;
+conf.INTERFACE.save_data = true;
 
 conf.REWARDS.single_pulse = 0.1;  % s
 conf.REWARDS.key_press = 0.1;

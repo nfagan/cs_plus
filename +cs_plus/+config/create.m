@@ -25,6 +25,7 @@ PATHS = struct();
 PATHS.repositories = '';
 PATHS.stimuli = fullfile( cs_plus.util.get_project_folder(), 'stimuli' );
 PATHS.edf_folder = cd;
+PATHS.data_folder = '';
 
 %   DEPENDENCIES
 DEPENDS = struct();
@@ -38,10 +39,12 @@ INTERFACE.use_mouse = true;
 INTERFACE.use_reward = true;
 INTERFACE.is_master_arduino = false;
 INTERFACE.debug = true;
+INTERFACE.save_data = true;
 
 %   STRUCTURE
 STRUCTURE = struct();
 STRUCTURE.require_fixation_during_delay = false;
+STRUCTURE.plex_sync_frequency = 0.5;  % s
 
 %   SCREEN
 SCREEN = struct();
@@ -55,6 +58,7 @@ SCREEN.rect = [ 0, 0, 1024, 768 ];
 TIMINGS = struct();
 
 time_in = struct();
+time_in.task = 0;
 time_in.fixation = 2;
 time_in.cs_presentation = Inf;
 time_in.cs_delay = 1;
