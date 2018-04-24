@@ -37,6 +37,14 @@ PLEX_SYNC.start_time = TIMER.get_time( 'task' );
 DATA = struct();
 TRIAL_NUMBER = 0;
 PROGRESS = struct();
+errors = struct( ...
+  'broke_initial_fixation', false ...
+  , 'initial_fixation_not_acquired', false ...
+  , 'broke_cs_fixation', false ...
+  , 'cs_fixation_not_acquired', false ...
+);
+n_correct = 0;
+n_errors = 0;
 
 comm.sync_pulse( 1 );
 
@@ -69,9 +77,22 @@ while ( true )
     if ( TRIAL_NUMBER > 0 )
       tn = TRIAL_NUMBER;
       DATA(tn).events = PROGRESS;
+      DATA(tn).errors = errors;
     end
+    
+    any_errors = any( structfun(@(x) x, errors) );
+    n_correct = n_correct + ~any_errors;
+    n_errors = n_errors + any_errors;
+    
+    clc;
+    fprintf( '\n N correct: %d', n_correct );
+    fprintf( '\n N errors: %d', n_errors );
+    fprintf( '\n N total: %d', TRIAL_NUMBER );
+    fprintf( '\n Ellapsed time: %0.3f', TIMER.get_time('task') );
+    
     TRIAL_NUMBER = TRIAL_NUMBER + 1;
     PROGRESS = structfun( @(x) nan, PROGRESS, 'un', false );
+    errors = structfun( @(x) false, errors, 'un', false );
     log_debug( sprintf('Current rewards: %d', current_n_rewards), is_debug );
     cstate = 'fixation';
     first_entry = true;
@@ -100,6 +121,7 @@ while ( true )
       looked_to_target = true;
     elseif ( looked_to_target )
       log_exit( cstate, is_debug );
+      errors.broke_initial_fixation = true;
       cstate = 'fixation_error';
       first_entry = true;
       continue;
@@ -107,6 +129,7 @@ while ( true )
     
     if ( TIMER.duration_met('aq_fixation') && ~looked_to_target )
       log_exit( cstate, is_debug );
+      errors.initial_fixation_not_acquired = true;
       cstate = 'fixation_error';
       first_entry = true;
       continue;
@@ -141,6 +164,7 @@ while ( true )
     
     if ( TIMER.duration_met('aq_cs') && ~looked_to_target )
       log_exit( cstate, is_debug );
+      errors.cs_fixation_not_acquired = true;
       cstate = 'cs_error';
       first_entry = true;
       continue;
@@ -151,6 +175,7 @@ while ( true )
       PROGRESS.cs_target_acquire = TIMER.get_time( 'task' );
     elseif ( looked_to_target )
       log_exit( cstate, is_debug );
+      errors.broke_cs_fixation = true;
       cstate = 'cs_error';
       first_entry = true;
       continue;
@@ -165,6 +190,7 @@ while ( true )
     
     if ( TIMER.duration_met(cstate) )
       log_exit( cstate, is_debug );
+      errors.cs_fixation_not_acquired = true;
       cstate = 'cs_error';
       first_entry = true;
     end
@@ -182,6 +208,7 @@ while ( true )
     if ( STRUCTURE.require_fixation_during_delay )
       if ( ~cs_stim.in_bounds() )
         log_exit( cstate, is_debug );
+        errors.broke_cs_fixation = true;
         cstate = 'cs_error';
         first_entry = true;
         continue;
