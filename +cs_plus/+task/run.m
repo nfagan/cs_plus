@@ -53,6 +53,7 @@ while ( true )
   if ( isnan(PLEX_SYNC.timer) || toc(PLEX_SYNC.timer) >= PLEX_SYNC.frequency )
     comm.sync_pulse( 2 );
     PLEX_SYNC.sync_times(PLEX_SYNC.sync_stp) = TIMER.get_time( 'task' );
+    TRACKER.send_message( 'RESYNCH' );
     PLEX_SYNC.sync_stp = PLEX_SYNC.sync_stp + 1;
     PLEX_SYNC.timer = tic();
   end
