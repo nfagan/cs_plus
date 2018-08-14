@@ -16,13 +16,17 @@ conf.SCREEN.index = 0;
 conf.STRUCTURE.require_fixation_during_delay = false;
 
 %   CS
+%conf.STIMULI.setup.cs.target_duration = 0.3;
 conf.STIMULI.setup.cs.target_duration = 0.3;
 conf.STIMULI.setup.cs.target_padding = 100;
+%conf.STIMULI.setup.cs.target_padding = 100;
 conf.STIMULI.setup.cs.size = 200;
 
 %   FIXATION SQUARE
+%conf.STIMULI.setup.fix_square.target_duration = 0.3;
 conf.STIMULI.setup.fix_square.target_duration = 0.3;
 conf.STIMULI.setup.fix_square.target_padding = 100;
+%conf.STIMULI.setup.fix_square.target_padding = 100;
 conf.STIMULI.setup.fix_square.size = 120;
 
 %   REWARD SIZE
@@ -48,7 +52,8 @@ conf.INTERFACE.use_mouse = false;
 conf.INTERFACE.use_reward = true;
 conf.INTERFACE.save_data = true;
 
-conf.REWARDS.single_pulse = 0.3;  % s
+%conf.REWARDS.single_pulse = 0.3;  % s
+conf.REWARDS.single_pulse = 0.2;  % s
 conf.REWARDS.key_press = 0.1;
 
 cs_plus.task.start( conf );
