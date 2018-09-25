@@ -12,13 +12,12 @@ conf.SCREEN.rect = [ 1680+1024, 0, 1680+1024*2, 768 ];
 %conf.SCREEN.rect = [ 0, 0, 1024, 768 ];
 % conf.SCREEN.rect = [ 0, 0, 400, 400 ];
 conf.SCREEN.index = 0;
-
 conf.STRUCTURE.require_fixation_during_delay = false;
 
 %   CS
 %conf.STIMULI.setup.cs.target_duration = 0.3;
 conf.STIMULI.setup.cs.target_duration = 0.3;
-conf.STIMULI.setup.cs.target_padding = 100;
+conf.STIMULI.setup.cs.target_padding = 120;
 %conf.STIMULI.setup.cs.target_padding = 100;
 conf.STIMULI.setup.cs.size = 200;
 

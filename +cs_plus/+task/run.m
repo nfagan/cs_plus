@@ -48,6 +48,12 @@ n_errors = 0;
 
 comm.sync_pulse( 1 );
 
+if ( ~comm.bypass )
+  brains.util.increment_start_pulse_count();
+end
+
+PLEX_SYNC.sync_index = brains.util.get_current_start_pulse_count();
+
 while ( true )
   
   if ( isnan(PLEX_SYNC.timer) || toc(PLEX_SYNC.timer) >= PLEX_SYNC.frequency )
@@ -79,6 +85,7 @@ while ( true )
       tn = TRIAL_NUMBER;
       DATA(tn).events = PROGRESS;
       DATA(tn).errors = errors;
+      DATA(tn).n_rewards = last_n_rewards;
     end
     
     any_errors = any( structfun(@(x) x, errors) );
@@ -94,6 +101,9 @@ while ( true )
     TRIAL_NUMBER = TRIAL_NUMBER + 1;
     PROGRESS = structfun( @(x) nan, PROGRESS, 'un', false );
     errors = structfun( @(x) false, errors, 'un', false );
+    
+    last_n_rewards = current_n_rewards;
+    
     log_debug( sprintf('Current rewards: %d', current_n_rewards), is_debug );
     cstate = 'fixation';
     first_entry = true;
